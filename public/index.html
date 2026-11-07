@@ -40,7 +40,7 @@ button,.file-label{border:0;border-radius:12px;padding:12px 15px;background:line
  <div class="divider"></div>
  <div class="small"><strong>โฟลเดอร์ปลายทาง (ฝั่งรับ)</strong><br>เลือกโฟลเดอร์เพื่อบันทึกไฟล์ลงดิสก์โดยตรงบนเบราว์เซอร์ที่รองรับ</div>
  <div class="actions"><button id="folderBtn" class="secondary">เลือกโฟลเดอร์รับไฟล์</button><span class="small" id="folderStatus">ยังไม่ได้เลือก · จะใช้ดาวน์โหลดปกติแทน</span></div>
- <div class="progress"><div class="bar" id="bar"></div></div><div class="status" id="transferStatus">ยังไม่ได้เชื่อมต่อ</div><div id="received"></div></div>
+ <div class="progress"><div class="bar" id="bar"></div></div><div class="status" id="transferStatus">ยังไม่ได้เชื่อมต่อ</div><div id="networkStatus" class="small" style="margin-top:8px">เส้นทางเครือข่าย: กำลังรอตรวจสอบ</div><div id="received"></div></div>
  <div class="notice">ความเป็นส่วนตัว: ระบบพยายามส่งตรงระหว่างอุปกรณ์ (P2P) โดยใช้เซิร์ฟเวอร์เพียงจับคู่ก่อน หากเครือข่ายบล็อกการเชื่อมต่อตรง จำเป็นต้องตั้งค่า TURN relay เพิ่มเติม ซึ่งอาจมีค่าใช้จ่ายและทำให้ข้อมูลวิ่งผ่านตัวกลาง</div>
 </section>
 <p class="foot">NEXUS DROP · P2P first · Optional TURN fallback · No account</p>
@@ -68,11 +68,37 @@ async function makePeer(initiator){
  pc.onicecandidate=e=>{if(e.candidate)sendSignal({type:'ice',candidate:e.candidate})};
  pc.onconnectionstatechange=()=>{if(!pc)return;console.info('Peer state',pc.connectionState,pc.iceConnectionState);if(pc.connectionState==='connected'){peerReady=true;$('pickBtn').disabled=false;state('เชื่อมต่อแล้ว','พร้อมส่งไฟล์แบบ Peer-to-Peer',true)}else if(['failed','disconnected','closed'].includes(pc.connectionState)){peerReady=false;$('pickBtn').disabled=true;if(pc.connectionState==='failed')state('เชื่อมต่อไม่สำเร็จ','เครือข่ายอาจต้องใช้ TURN relay')}};
  pc.oniceconnectionstatechange=()=>console.info('ICE state',pc.iceConnectionState);
+ startNetworkDiagnostics();
  if(initiator){dc=pc.createDataChannel('files');setupChannel();const offer=await pc.createOffer();await pc.setLocalDescription(offer);sendSignal({type:'offer',offer:pc.localDescription})}else pc.ondatachannel=e=>{dc=e.channel;setupChannel()};
+}
+let diagnosticsTimer=null;
+async function updateNetworkDiagnostics(){
+ if(!pc||pc.connectionState!=='connected')return;
+ try{
+  const stats=await pc.getStats();let pair=null,local=null,remote=null,outbound=null;
+  stats.forEach(s=>{
+   if(s.type==='candidate-pair'&&s.state==='succeeded'&&s.nominated)pair=s;
+   if(s.type==='local-candidate')local=s;
+   if(s.type==='remote-candidate')remote=s;
+   if(s.type==='outbound-rtp'&&s.kind==='data')outbound=s;
+  });
+  // Find the exact local/remote candidates referenced by the selected pair.
+  if(pair){local=stats.get(pair.localCandidateId)||local;remote=stats.get(pair.remoteCandidateId)||remote;}
+  const relay=(local&&local.candidateType==='relay')||(remote&&remote.candidateType==='relay');
+  const path=relay?'ผ่าน TURN Relay':'P2P โดยตรง';
+  const rtt=pair&&pair.currentRoundTripTime!=null?` · RTT ${(pair.currentRoundTripTime*1000).toFixed(0)} ms`:'';
+  const bitrate=pair&&pair.availableOutgoingBitrate?` · ประเมิน ${(pair.availableOutgoingBitrate/1000000).toFixed(1)} Mbps`:'';
+  $('networkStatus').textContent=`เส้นทางเครือข่าย: ${path}${rtt}${bitrate}`;
+ }catch(e){console.debug('Stats unavailable',e)}
+}
+function startNetworkDiagnostics(){
+ if(diagnosticsTimer)clearInterval(diagnosticsTimer);
+ diagnosticsTimer=setInterval(updateNetworkDiagnostics,2000);
+ updateNetworkDiagnostics();
 }
 async function addRemoteIce(c){if(!pc)return;if(!pc.remoteDescription){pendingIce.push(c);return}try{await pc.addIceCandidate(c)}catch(e){console.warn('ICE candidate rejected',e)}}
 async function flushPendingIce(){const q=pendingIce.splice(0);for(const c of q){try{await pc.addIceCandidate(c)}catch(e){console.warn('Queued ICE rejected',e)}}}
-function setupChannel(){dc.binaryType='arraybuffer';dc.bufferedAmountLowThreshold=512*1024;dc.onopen=()=>{peerReady=true;$('pickBtn').disabled=false;state('เชื่อมต่อแล้ว','พร้อมส่งไฟล์แบบ Peer-to-Peer',true)};dc.onclose=()=>{peerReady=false;$('pickBtn').disabled=true};dc.onmessage=handleData}
+function setupChannel(){dc.binaryType='arraybuffer';dc.bufferedAmountLowThreshold=2*1024*1024;dc.onopen=()=>{peerReady=true;$('pickBtn').disabled=false;state('เชื่อมต่อแล้ว','พร้อมส่งไฟล์แบบ Peer-to-Peer',true)};dc.onclose=()=>{peerReady=false;$('pickBtn').disabled=true};dc.onmessage=handleData}
 async function handleData(e){
  if(typeof e.data==='string'){
   const m=JSON.parse(e.data);
@@ -94,7 +120,21 @@ async function handleData(e){
 function addReceivedLink(name,detail,url){const a=document.createElement('a');if(url){a.href=url;a.download=name;a.textContent='ดาวน์โหลด '+name}else{a.textContent=name+' ✓'}const row=document.createElement('div');row.className='file-row';const left=document.createElement('span');left.append(a);const right=document.createElement('span');right.className='small';right.textContent=detail;row.append(left,right);$('received').prepend(row)}
 async function create(){try{role='creator';await connectSocket();sendSignal({type:'create'})}catch(e){state('เชื่อมต่อไม่ได้',e.message)}}
 async function join(){const code=$('joinCode').value.replace(/\D/g,'');if(code.length!==6){state('รหัสไม่ครบ','กรอกรหัส 6 หลัก');return}try{role='joiner';await connectSocket();room=code;sendSignal({type:'join',code});state('กำลังตรวจสอบรหัส','โปรดรอสักครู่',true)}catch(e){state('เชื่อมต่อไม่ได้',e.message)}}
-function waitBuffer(){return new Promise(resolve=>{if(dc.bufferedAmount<=1024*1024)return resolve();const check=()=>{if(!dc||dc.readyState!=='open'||dc.bufferedAmount<=512*1024){dc&&dc.removeEventListener('bufferedamountlow',check);resolve()}};dc.addEventListener('bufferedamountlow',check);setTimeout(check,100)})}
+function waitBuffer(){
+ const HIGH_WATER=8*1024*1024, LOW_WATER=2*1024*1024;
+ if(!dc||dc.readyState!=='open')return Promise.reject(new Error('DataChannel ไม่พร้อม'));
+ if(dc.bufferedAmount<=HIGH_WATER)return Promise.resolve();
+ return new Promise((resolve,reject)=>{
+  let finished=false;
+  const cleanup=()=>{dc&&dc.removeEventListener('bufferedamountlow',check);clearInterval(poll)};
+  const done=()=>{if(finished)return;finished=true;cleanup();resolve()};
+  const check=()=>{if(!dc||dc.readyState!=='open'){if(finished)return;finished=true;cleanup();reject(new Error('การเชื่อมต่อขาดระหว่างส่ง'));return}
+   if(dc.bufferedAmount<=LOW_WATER)done()};
+  dc.addEventListener('bufferedamountlow',check);
+  const poll=setInterval(check,25);
+  check();
+ });
+}
 async function sendFiles(list){
  if(!dc||dc.readyState!=='open'){state('ยังไม่เชื่อมต่อ','จับคู่อุปกรณ์ก่อน');return}
  const files=Array.from(list||[]);for(const file of files){
@@ -104,7 +144,7 @@ async function sendFiles(list){
   await waitBuffer();dc.send(JSON.stringify({kind:'file-end'}));$('transferStatus').textContent='ส่ง '+file.name+' เสร็จแล้ว';
  }$('picker').value='';
 }
-function resetPeer(){if(pc){pc.close();pc=null}dc=null;pendingIce=[];peerReady=false;$('pickBtn').disabled=true}
+function resetPeer(){if(diagnosticsTimer){clearInterval(diagnosticsTimer);diagnosticsTimer=null}if(pc){pc.close();pc=null}dc=null;pendingIce=[];peerReady=false;$('pickBtn').disabled=true}
 function disconnect(){sendSignal({type:'leave'});if(ws)ws.close();ws=null;resetPeer();room=null;$('myCode').textContent='------';state('พร้อมเชื่อมต่อ','สร้างรหัสบนอุปกรณ์หนึ่ง แล้วนำไปกรอกอีกเครื่อง');$('transferStatus').textContent='ยังไม่ได้เชื่อมต่อ'}
 $('createBtn').onclick=create;$('joinBtn').onclick=join;$('pickBtn').onclick=()=>$('picker').click();$('picker').onchange=e=>sendFiles(e.target.files);$('disconnectBtn').onclick=disconnect;
 $('dropZone').onclick=()=>$('picker').click();$('dropZone').ondragover=e=>{e.preventDefault();$('dropZone').classList.add('dragover')};$('dropZone').ondragleave=()=>$('dropZone').classList.remove('dragover');$('dropZone').ondrop=e=>{e.preventDefault();$('dropZone').classList.remove('dragover');sendFiles(e.dataTransfer.files)};
