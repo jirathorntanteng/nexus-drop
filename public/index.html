@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#070b17"><title>NEXUS DROP — Internet Transfer</title>
+<style>
+:root{color-scheme:dark;--cyan:#72e7ff;--blue:#399dff;--violet:#9c83ff;--muted:#9ba9c4;--line:#263754}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;color:#f5f7ff;font:16px -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;background:radial-gradient(ellipse at 50% 0%,#142b52 0,transparent 42%),radial-gradient(ellipse at 90% 45%,#25174c 0,transparent 34%),#070b17}
+main{max-width:880px;margin:auto;padding:28px 18px 56px}.top{display:flex;justify-content:space-between;align-items:center}.brand{font-weight:850;letter-spacing:3px}.brand b{color:var(--cyan)}.tag{font-size:11px;letter-spacing:1px;color:#b8c8e6;border:1px solid #344967;border-radius:99px;padding:7px 10px}
+h1{font-size:clamp(36px,7vw,58px);line-height:1.03;letter-spacing:-2px;margin:48px 0 10px}h1 span{background:linear-gradient(90deg,#8af0ff,#7daeff,#b59aff);background-clip:text;color:transparent}.lead{color:var(--muted);margin:0 0 28px}
+.card{border:1px solid #293a59;background:linear-gradient(145deg,#121d34ed,#0d1426ed);border-radius:25px;padding:22px;box-shadow:0 22px 80px #0006}
+.orb-wrap{display:flex;flex-direction:column;align-items:center;padding:12px 0 18px}.orb{width:150px;height:150px;border-radius:50%;position:relative;background:radial-gradient(circle at 35% 28%,#e6ffff 0 3%,#8cf4ff 8%,#42baff 28%,#2868e9 55%,#4935bc 75%,#151b55 100%);box-shadow:0 0 24px #4fcfff99,0 0 65px #397bff66,inset -12px -15px 30px #100b50aa,inset 8px 9px 20px #d4ffff88;animation:float 4s ease-in-out infinite}
+.orb:before,.orb:after{content:"";position:absolute;inset:-13px;border-radius:50%;border:1px solid #75dfff66;transform:scaleY(.38) rotate(-20deg);box-shadow:0 0 20px #54caff44}.orb:after{inset:-23px;transform:scaleY(.48) rotate(28deg);border-color:#a18bff55;animation:spin 12s linear infinite}
+.orb.active{animation:pulse 1.7s ease-in-out infinite}.orb.done{filter:hue-rotate(25deg)}
+@keyframes float{50%{transform:translateY(-7px)}}@keyframes pulse{50%{transform:scale(1.06);box-shadow:0 0 40px #4fcfffcc,0 0 90px #397bff99}}@keyframes spin{to{transform:scaleY(.48) rotate(388deg)}}
+.orb-title{font-weight:700;margin-top:22px}.status{font-size:13px;color:var(--muted);text-align:center;margin-top:5px;min-height:20px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.pane{background:#0d172b;border:1px solid #263957;border-radius:17px;padding:16px}.pane h2{font-size:14px;margin:0 0 12px}.code{font-size:30px;letter-spacing:8px;font-weight:800;color:var(--cyan);margin:8px 0}.small{font-size:12px;color:var(--muted);line-height:1.55}
+input{width:100%;background:#080f20;border:1px solid #344968;color:white;border-radius:12px;padding:13px;font:inherit;outline:none}input:focus{border-color:var(--cyan)}input.code-input{text-align:center;letter-spacing:9px;font-size:24px;font-weight:800}
+button,.file-label{border:0;border-radius:12px;padding:12px 15px;background:linear-gradient(100deg,#65e6ff,#9b8aff);color:#07101e;font-weight:800;cursor:pointer;font-size:14px;display:inline-block;text-align:center}button.secondary{background:#1b2942;border:1px solid #3b5275;color:#eef5ff}button:disabled{opacity:.4;cursor:not-allowed}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.wide{width:100%;margin-top:10px}.divider{height:1px;background:#263550;margin:18px 0}.progress{height:6px;background:#263550;border-radius:9px;overflow:hidden;margin-top:12px}.bar{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--violet));transition:width .12s}
+.file-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #25334c;font-size:13px}.file-row:last-child{border-bottom:0}.file-row span:first-child{overflow-wrap:anywhere}.hidden{display:none!important}.notice{font-size:12px;line-height:1.55;color:#aebbd4;background:#101c32;border:1px solid #2a3d5d;border-radius:13px;padding:12px;margin-top:15px}.foot{text-align:center;color:#7282a1;font-size:11px;margin-top:20px}
+@media(max-width:620px){main{padding:20px 13px 40px}h1{margin-top:38px}.card{padding:15px}.grid{grid-template-columns:1fr}.orb{width:128px;height:128px}.code{font-size:27px}}
+</style>
+</head>
+<body><main>
+<header class="top"><div class="brand">NEXUS <b>DROP</b></div><div class="tag">INTERNET TRANSFER</div></header>
+<h1>Send anywhere.<br><span>Stay original.</span></h1>
+<p class="lead">จับคู่ด้วยรหัส 6 หลัก แล้วส่งไฟล์ต้นฉบับข้ามเครือข่าย</p>
+<section class="card">
+ <div class="orb-wrap"><div class="orb" id="orb"></div><div class="orb-title" id="orbTitle">พร้อมเชื่อมต่อ</div><div class="status" id="status">สร้างรหัสบนอุปกรณ์หนึ่ง แล้วนำไปกรอกอีกเครื่อง</div></div>
+ <div class="grid">
+  <div class="pane"><h2>① สร้างรหัสจับคู่</h2><div class="code" id="myCode">------</div><div class="small" id="expiry">รหัสใช้ได้ประมาณ 10 นาที</div><button id="createBtn" class="wide">สร้างรหัส 6 หลัก</button></div>
+  <div class="pane"><h2>② ใส่รหัสจากอีกเครื่อง</h2><input id="joinCode" class="code-input" inputmode="numeric" maxlength="6" placeholder="••••••"><button id="joinBtn" class="wide">เชื่อมต่อ</button></div>
+ </div>
+ <div class="divider"></div>
+ <div class="pane"><h2>ส่งไฟล์</h2><div class="small">เมื่อเชื่อมต่อสำเร็จแล้ว เลือกไฟล์ที่ต้องการส่ง ไฟล์จะถูกส่งผ่านช่องทาง P2P เมื่อเครือข่ายอนุญาต</div><input id="picker" type="file" multiple class="hidden"><div class="actions"><button id="pickBtn" disabled>เลือกไฟล์เพื่อส่ง</button><button id="disconnectBtn" class="secondary">ตัดการเชื่อมต่อ</button></div><div class="progress"><div class="bar" id="bar"></div></div><div class="status" id="transferStatus">ยังไม่ได้เชื่อมต่อ</div><div id="received"></div></div>
+ <div class="notice">ความเป็นส่วนตัว: ระบบพยายามส่งตรงระหว่างอุปกรณ์ (P2P) โดยใช้เซิร์ฟเวอร์เพียงจับคู่ก่อน หากเครือข่ายบล็อกการเชื่อมต่อตรง จำเป็นต้องตั้งค่า TURN relay เพิ่มเติม ซึ่งอาจมีค่าใช้จ่ายและทำให้ข้อมูลวิ่งผ่านตัวกลาง</div>
+</section>
+<p class="foot">NEXUS DROP · P2P first · Optional TURN fallback · No account</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let ws,pc,dc,room,role,peerReady=false,rx=null,rxParts=[],rxBytes=0;
+const CHUNK=64*1024;
+function state(title,msg,active=false){$('orbTitle').textContent=title;$('status').textContent=msg;$('orb').classList.toggle('active',active)}
+function sendSignal(obj){if(ws&&ws.readyState===1)ws.send(JSON.stringify(obj))}
+function connectSocket(){return new Promise((resolve,reject)=>{const proto=location.protocol==='https:'?'wss':'ws';ws=new WebSocket(`${proto}://${location.host}`);ws.onopen=()=>resolve();ws.onerror=()=>reject(new Error('เชื่อมต่อเซิร์ฟเวอร์จับคู่ไม่ได้'));ws.onmessage=async ev=>{const m=JSON.parse(ev.data);if(m.type==='created'){room=m.code;$('myCode').textContent=room;$('expiry').textContent='แชร์รหัสนี้ให้อีกอุปกรณ์ · หมดอายุใน 10 นาที';state('รออีกอุปกรณ์','เปิดเว็บอีกเครื่องแล้วกรอกรหัสนี้',true)}
+else if(m.type==='joined'){state('กำลังจับคู่','กำลังสร้างการเชื่อมต่อที่ปลอดภัย',true);if(role==='creator')await makePeer(true)}
+else if(m.type==='peer-joined'){state('กำลังเชื่อมต่อ','กำลังเจรจา WebRTC',true);if(role==='creator')await makePeer(true)}
+else if(m.type==='offer'){if(!pc)await makePeer(false);await pc.setRemoteDescription(m.offer);const answer=await pc.createAnswer();await pc.setLocalDescription(answer);sendSignal({type:'answer',answer})}
+else if(m.type==='answer'){await pc.setRemoteDescription(m.answer)}
+else if(m.type==='ice'&&pc){try{await pc.addIceCandidate(m.candidate)}catch(e){}}
+else if(m.type==='peer-left'){state('อีกอุปกรณ์ตัดการเชื่อมต่อ','สร้างหรือกรอกรหัสใหม่เพื่อเริ่มอีกครั้ง');resetPeer()}
+else if(m.type==='error'){state('เกิดข้อผิดพลาด',m.message);$('myCode').textContent='------'}
+};});}
+async function makePeer(initiator){
+ if(pc)return;
+ pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
+ pc.onicecandidate=e=>{if(e.candidate)sendSignal({type:'ice',candidate:e.candidate})};
+ pc.onconnectionstatechange=()=>{if(pc.connectionState==='connected'){peerReady=true;$('pickBtn').disabled=false;state('เชื่อมต่อแล้ว','พร้อมส่งไฟล์แบบ Peer-to-Peer',true)}else if(['failed','disconnected','closed'].includes(pc.connectionState)){peerReady=false;$('pickBtn').disabled=true;if(pc.connectionState==='failed')state('เชื่อมต่อไม่สำเร็จ','เครือข่ายอาจต้องใช้ TURN relay') }};
+ if(initiator){dc=pc.createDataChannel('files');setupChannel();const offer=await pc.createOffer();await pc.setLocalDescription(offer);sendSignal({type:'offer',offer})}
+ else pc.ondatachannel=e=>{dc=e.channel;setupChannel()};
+}
+function setupChannel(){dc.binaryType='arraybuffer';dc.onopen=()=>{peerReady=true;$('pickBtn').disabled=false;state('เชื่อมต่อแล้ว','พร้อมส่งไฟล์แบบ Peer-to-Peer',true)};dc.onclose=()=>{peerReady=false;$('pickBtn').disabled=true};dc.onmessage=handleData}
+async function handleData(e){
+ if(typeof e.data === 'string'){
+  const m = JSON.parse(e.data);
+  if(m.kind === 'file-start'){
+   rx = {name:m.name, type:m.type, size:m.size};
+   rxParts = []; rxBytes = 0;
+   $('transferStatus').textContent = 'กำลังรับ ' + m.name;
+   $('bar').style.width = '0%';
+  } else if(m.kind === 'file-end' && rx){
+   const blob = new Blob(rxParts, {type:rx.type || 'application/octet-stream'});
+   const url = URL.createObjectURL(blob);
+   const a = document.createElement('a'); a.href = url; a.download = rx.name;
+   a.textContent = 'ดาวน์โหลด ' + rx.name;
+   const row = document.createElement('div'); row.className = 'file-row';
+   row.append(a, document.createTextNode((blob.size/1048576).toFixed(2) + ' MB'));
+   $('received').prepend(row);
+   $('transferStatus').textContent = 'รับไฟล์เสร็จแล้ว';
+   rx = null; rxParts = []; $('bar').style.width = '100%';
+  }
+ } else if(rx){
+  rxParts.push(e.data); rxBytes += e.data.byteLength;
+  $('bar').style.width = Math.min(100, rxBytes/rx.size*100) + '%';
+  $('transferStatus').textContent = `รับแล้ว ${(rxBytes/1048576).toFixed(1)} / ${(rx.size/1048576).toFixed(1)} MB`;
+ }
+}
+async function create(){try{role='creator';await connectSocket();sendSignal({type:'create'})}catch(e){state('เชื่อมต่อไม่ได้',e.message)}}
+async function join(){const code=$('joinCode').value.replace(/\D/g,'');if(code.length!==6){state('รหัสไม่ครบ','กรอกรหัส 6 หลัก');return}try{role='joiner';await connectSocket();room=code;sendSignal({type:'join',code});state('กำลังตรวจสอบรหัส','โปรดรอสักครู่',true)}catch(e){state('เชื่อมต่อไม่ได้',e.message)}}
+async function sendFiles(list){if(!dc||dc.readyState!=='open'){state('ยังไม่เชื่อมต่อ','จับคู่อุปกรณ์ก่อน');return}for(const file of list){if(file.size>2*1024*1024*1024){$('transferStatus').textContent='ไฟล์นี้ใหญ่เกินขีดจำกัดทดลอง 2 GB';continue}dc.send(JSON.stringify({kind:'file-start',name:file.name,type:file.type,size:file.size}));let offset=0;while(offset<file.size){while(dc.bufferedAmount>4*1024*1024)await new Promise(r=>setTimeout(r,40));const chunk=await file.slice(offset,offset+CHUNK).arrayBuffer();dc.send(chunk);offset+=chunk.byteLength;$('bar').style.width=(offset/file.size*100)+'%';$('transferStatus').textContent=`กำลังส่ง ${file.name} · ${(offset/1048576).toFixed(1)} / ${(file.size/1048576).toFixed(1)} MB`}dc.send(JSON.stringify({kind:'file-end'}));$('transferStatus').textContent='ส่ง '+file.name+' เสร็จแล้ว'}$('picker').value=''}
+function resetPeer(){if(pc){pc.close();pc=null}dc=null;peerReady=false;$('pickBtn').disabled=true}
+function disconnect(){sendSignal({type:'leave'});if(ws)ws.close();ws=null;resetPeer();room=null;$('myCode').textContent='------';state('พร้อมเชื่อมต่อ','สร้างรหัสบนอุปกรณ์หนึ่ง แล้วนำไปกรอกอีกเครื่อง');$('transferStatus').textContent='ยังไม่ได้เชื่อมต่อ'}
+$('createBtn').onclick=create;$('joinBtn').onclick=join;$('pickBtn').onclick=()=>$('picker').click();$('picker').onchange=e=>sendFiles(e.target.files);$('disconnectBtn').onclick=disconnect;
+$('joinCode').addEventListener('input',e=>e.target.value=e.target.value.replace(/\D/g,'').slice(0,6));
+</script></body></html>

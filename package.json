@@ -1,0 +1,17 @@
+{
+  "name": "nexus-drop-internet",
+  "version": "0.2.0",
+  "private": true,
+  "description": "NEXUS DROP Internet Transfer \u2014 WebRTC P2P with 6-digit pairing",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  }
+}
